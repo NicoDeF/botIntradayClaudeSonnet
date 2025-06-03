@@ -1,0 +1,60 @@
+flowchart TD
+    A[Inicio del Bot] --> B[Configurar Cliente Binance]
+    B --> C[Configurar Apalancamiento]
+    C --> D[Obtener Datos Históricos 800 velas]
+    D --> E{Datos obtenidos?}
+    E -->|No| F[Error: Terminar Bot]
+    E -->|Sí| G[Iniciar WebSocket]
+    G --> H[Escuchar Nuevas Velas]
+    
+    H --> I{Vela Cerrada?}
+    I -->|No| H
+    I -->|Sí| J[Obtener Datos Históricos Actualizados]
+    
+    J --> K[Calcular Indicadores]
+    K --> L[Calcular EMAs: 89, 200, 600]
+    L --> M[Calcular PAC Channel: EMA 34 de High/Low/Close]
+    M --> N[Determinar Dirección de Tendencia]
+    N --> O[Detectar Señales de Pullback]
+    
+    O --> P{Señal de Compra?}
+    P -->|Sí| Q{Hay Posición Abierta?}
+    Q -->|No| R[Ejecutar Orden de Compra]
+    Q -->|Sí| S[Ignorar Señal]
+    
+    P -->|No| T{Señal de Venta?}
+    T -->|Sí| U{Hay Posición Abierta?}
+    U -->|No| V[Ejecutar Orden de Venta]
+    U -->|Sí| W[Ignorar Señal]
+    
+    T -->|No| X[Log Estado Actual]
+    
+    R --> Y[Colocar Stop Loss]
+    Y --> Z[Colocar Take Profit]
+    Z --> X
+    
+    V --> AA[Colocar Stop Loss]
+    AA --> BB[Colocar Take Profit]
+    BB --> X
+    
+    S --> X
+    W --> X
+    X --> CC[Verificar Estado de Posición]
+    CC --> DD{Posición Cerrada por SL/TP?}
+    DD -->|Sí| EE[Actualizar Estado: Sin Posición]
+    DD -->|No| FF[Mantener Estado Actual]
+    
+    EE --> H
+    FF --> H
+    
+    subgraph "Condiciones Señal de Compra"
+        G1[Tendencia Alcista:<br/>EMA89 > EMA200 AND<br/>PAC_Low > EMA200]
+        G2[Pullback Detectado:<br/>Precio estuvo debajo<br/>de PAC_Close en últimas 3 velas]
+        G3[Recuperación:<br/>Open < PAC_High AND<br/>Close > PAC_High]
+    end
+    
+    subgraph "Condiciones Señal de Venta"
+        H1[Tendencia Bajista:<br/>EMA89 < EMA200 AND<br/>PAC_High < EMA200]
+        H2[Pullback Detectado:<br/>Precio estuvo arriba<br/>de PAC_Close en últimas 3 velas]
+        H3[Recuperación:<br/>Open > PAC_Low AND<br/>Close < PAC_Low]
+    end
